@@ -60,7 +60,7 @@ Generates `.srcjar` containing generated `.java` source files from a collection 
       <td>
         <code>List of labels, required</code>
         <p>
-          List of `.avsc` files used as inputs for code generation
+          List of <code>.avsc</code> files used as inputs for code generation
         </p>
       </td>
     </tr>
@@ -68,14 +68,14 @@ Generates `.srcjar` containing generated `.java` source files from a collection 
       <td><code>strings</code></td>
       <td>
         <code>Boolean, optional</code>
-        <p>use java.lang.String instead of Utf8.</p>
+        <p>use <code>java.lang.String</code> instead of <code>Utf8</code>.</p>
       </td>
     </tr>
     <tr>
       <td><code>big_decimals</code></td>
       <td>
         <code>Boolean, optional</code>
-        <p>use java.math.BigDecimal for.</p>
+        <p>use <code>java.math.BigDecimal</code> for decimal type instead of <code>java.nio.ByteBuffer</code>.</p>
       </td>
     </tr>
     <tr>
