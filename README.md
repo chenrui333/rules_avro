@@ -4,8 +4,8 @@
 
 ## Rules
 
-* [avro_gen][avro_gen]
-* [avro_java_library][avro_java_library]
+* [avro_gen](avro_gen)
+* [avro_java_library](avro_java_library)
 
 ## Getting started
 
