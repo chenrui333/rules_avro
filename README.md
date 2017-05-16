@@ -24,7 +24,8 @@ load("@io_bazel_rules_avro//avro:avro.bzl", "avro_repositories")
 avro_repositories()
 ```
 
-Then in your BUILD file just add the following so the rules will be available:
+Then in your `BUILD` file, just add the following so the rules will be available:
+
 ```python
 load("@io_bazel_rules_avro//avro:avro.bzl", "avro_gen", "avro_java_library")
 ```
