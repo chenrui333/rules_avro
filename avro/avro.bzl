@@ -33,29 +33,6 @@ def avro_repositories():
   )
 
 
-  # transitive deps
-  native.maven_jar(
-      name = "org_codehaus_jackson_jackson_core_asl",
-      artifact = "org.codehaus.jackson:jackson-core-asl:1.9.13",
-      sha1 = "3c304d70f42f832e0a86d45bd437f692129299a4",
-  )
-  native.bind(
-      name = 'io_bazel_rules_avro/dependency/jackson_core_asl',
-      actual = '@org_codehaus_jackson_jackson_core_asl//jar',
-  )
-
-  # transitent dependencies
-  native.maven_jar(
-      name = "org_codehaus_jackson_jackson_mapper_asl",
-      artifact = "org.codehaus.jackson:jackson-mapper-asl:1.9.13",
-      sha1 = "1ee2f2bed0e5dd29d1cb155a166e6f8d50bbddb7",
-  )
-  native.bind(
-      name = 'io_bazel_rules_avro/dependency/jackson_mapper_asl',
-      actual = '@org_codehaus_jackson_jackson_mapper_asl//jar',
-  )
-
-
 def _new_generator_command(ctx, src_dir, gen_dir):
   gen_command  = "{java} -jar {tool} compile ".format(
      java=ctx.executable._java.path,
