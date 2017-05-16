@@ -4,7 +4,7 @@
   "doc": "v1",
  "fields": [
      {"name": "name", "type": "string"},
-     {"name": "favorite_number",  "type": ["int", "null"]},
-     {"name": "favorite_color", "type": ["string", "null"]}
+     {"name": "favorite_number",  "type": "int", "default": 1 },
+     {"name": "favorite_color", "type": "string", "default": "blue" }
  ]
 }

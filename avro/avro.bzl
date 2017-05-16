@@ -17,7 +17,7 @@ def avro_repositories():
       sha1 = "361c32d4cad8dea8e5944d588e7d410f9f2a7114",
   )
   native.bind(
-      name = 'io_bazel_rules_avro_tools/dependency/avro_tools',
+      name = 'io_bazel_rules_avro/dependency/avro_tools',
       actual = '@org_apache_avro_avro_tools//jar',
   )
 
@@ -28,9 +28,54 @@ def avro_repositories():
       sha1 = "f4e11d00055760dca33daab193192bd75cc87b59",
   )
   native.bind(
-      name = 'io_bazel_rules_avro_tools/dependency/avro',
+      name = 'io_bazel_rules_avro/dependency/avro',
       actual = '@org_apache_avro_avro//jar',
   )
+
+
+  # transitive deps
+  native.maven_jar(
+      name = "org_codehaus_jackson_jackson_core_asl",
+      artifact = "org.codehaus.jackson:jackson-core-asl:1.9.13",
+      sha1 = "3c304d70f42f832e0a86d45bd437f692129299a4",
+  )
+  native.bind(
+      name = 'io_bazel_rules_avro/dependency/jackson_core_asl',
+      actual = '@org_codehaus_jackson_jackson_core_asl//jar',
+  )
+
+  # transitent dependencies
+  native.maven_jar(
+      name = "org_codehaus_jackson_jackson_mapper_asl",
+      artifact = "org.codehaus.jackson:jackson-mapper-asl:1.9.13",
+      sha1 = "1ee2f2bed0e5dd29d1cb155a166e6f8d50bbddb7",
+  )
+  native.bind(
+      name = 'io_bazel_rules_avro/dependency/jackson_mapper_asl',
+      actual = '@org_codehaus_jackson_jackson_mapper_asl//jar',
+  )
+
+
+def _new_generator_command(ctx, src_dir, gen_dir):
+  gen_command  = "{java} -jar {tool} compile ".format(
+     java=ctx.executable._java.path,
+     tool=ctx.file._avro_tools.path,
+  )
+
+  if ctx.attr.strings:
+    gen_command += " -string"
+
+  if ctx.attr.encoding:
+    gen_command += " -encoding {encoding}".format(
+      encoding=ctx.attr.encoding
+    )
+
+  gen_command += " schema {src} {gen_dir}".format(
+    src=src_dir,
+    gen_dir=gen_dir
+  )
+
+  return gen_command
 
 def _impl(ctx):
     src_dir = _commonprefix(
@@ -40,48 +85,18 @@ def _impl(ctx):
          out=ctx.outputs.codegen.path
     )
     commands = [
-        "mkdir -p {gen_dir}".format(gen_dir=gen_dir)
+        "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
+        _new_generator_command(ctx, src_dir, gen_dir),
+        # forcing a timestamp for deterministic artifacts
+        "find {gen_dir} -exec touch -t 198001010000 {{}} \;".format(
+          gen_dir=gen_dir
+        ),
+        "{jar} cMf {output} -C {gen_dir} .".format(
+          jar=ctx.file._jar.path,
+          output=ctx.outputs.codegen.path,
+          gen_dir=gen_dir
+        )
     ]
-
-    gen_command  = "{java} -jar {tool} compile ".format(
-       java=ctx.executable._java.path,
-       tool=ctx.file._avro_tools.path,
-    )
-
-    if ctx.attr.strings:
-      gen_command += " -string"
-
-    if ctx.attr.big_decimals:
-      gen_command += " -bigDecimal"
-
-    if ctx.attr.encoding:
-      gen_command += " -encoding {encoding}".format(
-        encoding=ctx.attr.encoding
-      )
-
-    gen_command += " schema {src} {gen_dir}".format(
-      src=src_dir,
-      gen_dir=gen_dir
-    )
-
-    commands.append(
-      gen_command
-    )
-
-    commands.append(
-      # forcing a timestamp for deterministic artifacts
-      "find {gen_dir} -exec touch -t 198001010000 {{}} \;".format(
-        gen_dir=gen_dir
-      )
-    )
-
-    commands.append(
-      "{jar} cMf {output} -C {gen_dir} .".format(
-        jar=ctx.file._jar.path,
-        output=ctx.outputs.codegen.path,
-        gen_dir=gen_dir
-      )
-    )
 
     inputs = ctx.files.srcs + ctx.files._jdk + [
       ctx.executable._java,
@@ -106,7 +121,6 @@ avro_gen = rule(
           allow_files = _avro_filetype
         ),
         "strings": attr.bool(),
-        "big_decimals": attr.bool(),
         "encoding": attr.string(),
         "_jdk": attr.label(
           default=Label("//tools/defaults:jdk"),
@@ -126,7 +140,7 @@ avro_gen = rule(
         ),
         "_avro_tools": attr.label(
             cfg = "host",
-            default = Label("//external:io_bazel_rules_avro_tools/dependency/avro_tools"),
+            default = Label("//external:io_bazel_rules_avro/dependency/avro_tools"),
             allow_single_file = True,
         )
     },
@@ -138,12 +152,11 @@ avro_gen = rule(
 
 
 def avro_java_library(
-  name, srcs=[], strings=None, big_decimals=None, encoding=None, visibility=None):
+  name, srcs=[], strings=None, encoding=None, visibility=None):
     avro_gen(
         name=name + '_srcjar',
         srcs = srcs,
         strings=strings,
-        big_decimals=big_decimals,
         encoding=encoding,
         visibility=visibility,
     )
@@ -151,7 +164,7 @@ def avro_java_library(
         name=name,
         srcs=[name + '_srcjar'],
         deps = [
-          Label("//external:io_bazel_rules_avro_tools/dependency/avro")
+          Label("//external:io_bazel_rules_avro/dependency/avro")
         ],
         visibility=visibility,
     )
