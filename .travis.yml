@@ -13,9 +13,11 @@ os:
 env:
   - V=HEAD
   - V=0.17.2
+
 matrix:
   allow_failures:
   - V=HEAD
+
 before_install:
   - |
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
