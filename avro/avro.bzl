@@ -37,8 +37,9 @@ def avro_repositories():
 
 
 def _new_generator_command(ctx, src_dir, gen_dir):
+  java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
   gen_command  = "{java} -jar {tool} compile ".format(
-     java=ctx.executable._java.path,
+     java=java_path,
      tool=ctx.file._avro_tools.path,
   )
 
@@ -72,14 +73,13 @@ def _impl(ctx):
           gen_dir=gen_dir
         ),
         "{jar} cMf {output} -C {gen_dir} .".format(
-          jar=ctx.file._jar.path,
+          jar="%s/bin/jar" % ctx.attr._jdk[java_common.JavaRuntimeInfo].java_home,
           output=ctx.outputs.codegen.path,
           gen_dir=gen_dir
         )
     ]
 
     inputs = ctx.files.srcs + ctx.files._jdk + [
-      ctx.executable._java,
       ctx.file._avro_tools,
     ]
 
@@ -103,21 +103,9 @@ avro_gen = rule(
         "strings": attr.bool(),
         "encoding": attr.string(),
         "_jdk": attr.label(
-          default=Label("//tools/defaults:jdk"),
-          allow_files=True
-        ),
-        "_java": attr.label(
-            executable = True,
-            cfg = "host",
-            default = Label("@bazel_tools//tools/jdk:java"),
-            single_file = True,
-            allow_files = True,
-        ),
-        "_jar": attr.label(
-            default=Label("@bazel_tools//tools/jdk:jar"),
-            allow_files=True,
-            single_file=True
-        ),
+                    default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
+                    providers = [java_common.JavaRuntimeInfo]
+                ),
         "_avro_tools": attr.label(
             cfg = "host",
             default = Label("//external:io_bazel_rules_avro/dependency/avro_tools"),
