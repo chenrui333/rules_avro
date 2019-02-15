@@ -4,7 +4,10 @@ def _commonprefix(m):
     if not m: return ''
     s1 = min(m)
     s2 = max(m)
-    for i, c in enumerate([s for s in s1]):
+    chars = []
+    for i in range(0, len(s1)):
+        chars.append(s1[i])
+    for i, c in enumerate(chars):
         if c != s2[i]:
             return s1[:i]
     return s1
