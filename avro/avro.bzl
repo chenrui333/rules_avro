@@ -103,9 +103,9 @@ avro_gen = rule(
         "strings": attr.bool(),
         "encoding": attr.string(),
         "_jdk": attr.label(
-                    default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
-                    providers = [java_common.JavaRuntimeInfo]
-                ),
+            default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
+            providers = [java_common.JavaRuntimeInfo]
+        ),
         "_avro_tools": attr.label(
             cfg = "host",
             default = Label("//external:io_bazel_rules_avro/dependency/avro_tools"),
