@@ -98,7 +98,7 @@ def _impl(ctx):
 avro_gen = rule(
     attrs = {
         "srcs": attr.label_list(
-          allow_files = _avro_filetype
+          allow_files = [".avsc"]
         ),
         "strings": attr.bool(),
         "encoding": attr.string(),
