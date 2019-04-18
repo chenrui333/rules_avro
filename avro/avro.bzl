@@ -1,5 +1,3 @@
-_avro_filetype = FileType([".avsc"])
-
 def _commonprefix(m):
     if not m: return ''
     s1 = min(m)
