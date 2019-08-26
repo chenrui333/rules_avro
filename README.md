@@ -12,7 +12,22 @@
 To use the Avro rules, add the following to your projects `WORKSPACE` file
 
 ```python
-rules_avro_version="4413a57db613a1eba5d5a56ca48d7c6655726bb8" # update this as needed
+# rules_avro depends on rules_jvm_external: https://github.com/bazelbuild/rules_jvm_external
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+RULES_JVM_EXTERNAL_TAG = "2.7"
+
+RULES_JVM_EXTERNAL_SHA = "f04b1466a00a2845106801e0c5cec96841f49ea4e7d1df88dc8e4bf31523df74"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+
+rules_avro_version="c9bfdda9e909e4213abc595a07353e0d23128bbd" # update this commit hash as needed
 
 git_repository(
     name = "io_bazel_rules_avro",
@@ -22,6 +37,8 @@ git_repository(
 
 load("@io_bazel_rules_avro//avro:avro.bzl", "avro_repositories")
 avro_repositories()
+# or specify a version
+avro_repositories(version = "1.8.2")
 ```
 
 Then in your `BUILD` file, just add the following so the rules will be available:
