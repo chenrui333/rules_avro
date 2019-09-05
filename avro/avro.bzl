@@ -1,14 +1,37 @@
-def _commonprefix(m):
-    if not m: return ''
-    s1 = min(m)
-    s2 = max(m)
-    chars = []
-    for i in range(0, len(s1)):
-        chars.append(s1[i])
-    for i, c in enumerate(chars):
-        if c != s2[i]:
-            return s1[:i]
-    return s1
+def _join_list(l, delimiter):
+    """
+    Join a list into a single string. Inverse of List#split()
+
+    l: List[String]
+    delimiter: String
+    """
+    joined = ""
+    for item in l:
+        joined += (item + delimiter)
+    return joined
+
+def _common_dir(files):
+    if not files:
+        return ""
+
+    dirs = [f.dirname for f in files]
+
+    if len(dirs) == 1:
+        return dirs[0]
+
+    split_dirs = [dir.split("/") for dir in dirs]
+
+    # for each dir in the shortest, make sure all the dirs
+
+    shortest = min(split_dirs)
+    longest = max(split_dirs)
+
+    for i, piece in enumerate(shortest):
+        # if the next dir does not match, we've found our common parent
+        if piece != longest[i]:
+            return _join_list(shortest[:i], "/")
+
+    return _join_list(shortest, "/")
 
 def avro_repositories():
   # for code generation
@@ -57,9 +80,7 @@ def _new_generator_command(ctx, src_dir, gen_dir):
   return gen_command
 
 def _impl(ctx):
-    src_dir = _commonprefix(
-      [f.path for f in ctx.files.srcs]
-    )
+    src_dir = _common_dir(ctx.files.srcs)
     gen_dir = "{out}-tmp".format(
          out=ctx.outputs.codegen.path
     )
