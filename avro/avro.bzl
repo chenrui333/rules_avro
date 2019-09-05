@@ -10,18 +10,14 @@ def _join_list(l, delimiter):
         joined += (item + delimiter)
     return joined
 
-def _common_dir(files):
-    if not files:
+def _common_dir(dirs):
+    if not dirs:
         return ""
-
-    dirs = [f.dirname for f in files]
 
     if len(dirs) == 1:
         return dirs[0]
 
     split_dirs = [dir.split("/") for dir in dirs]
-
-    # for each dir in the shortest, make sure all the dirs
 
     shortest = min(split_dirs)
     longest = max(split_dirs)
@@ -80,7 +76,7 @@ def _new_generator_command(ctx, src_dir, gen_dir):
   return gen_command
 
 def _impl(ctx):
-    src_dir = _common_dir(ctx.files.srcs)
+    src_dir = _common_dir([f.dirname for f in ctx.files.srcs])
     gen_dir = "{out}-tmp".format(
          out=ctx.outputs.codegen.path
     )
