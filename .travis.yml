@@ -10,8 +10,12 @@ os:
   - linux
   - osx
 
+branches:
+  only:
+    - master
+
 env:
-  - V=0.25.3
+  - V=0.29.1
 
 before_install:
   - |
