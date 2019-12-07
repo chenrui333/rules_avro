@@ -52,9 +52,9 @@ def _common_dir(dirs):
 
     return _join_list(shortest, "/")
 
-def avro_repositories(version = "1.8.1"):
+def avro_repositories(version = "1.9.1"):
     """
-    version: str = "1.8.1" - the version of avro to fetch
+    version: str = "1.9.1" - the version of avro to fetch
     """
     artifacts = [
         maven.artifact(
@@ -97,11 +97,11 @@ def _new_generator_command(ctx, src_dir, gen_dir):
 
 def _impl(ctx):
     src_dir = _common_dir([f.dirname for f in ctx.files.srcs])
-    
+
     gen_dir = "{out}-tmp".format(
          out=ctx.outputs.codegen.path
     )
-    
+
     commands = [
         "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
         _new_generator_command(ctx, src_dir, gen_dir),

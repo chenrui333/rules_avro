@@ -40,7 +40,7 @@ git_repository(
 load("@io_bazel_rules_avro//avro:avro.bzl", "avro_repositories")
 avro_repositories()
 # or specify a version
-avro_repositories(version = "1.8.2")
+avro_repositories(version = "1.9.1")
 ```
 
 Then in your `BUILD` file, just add the following so the rules will be available:
