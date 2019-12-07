@@ -1,3 +1,26 @@
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+load("@rules_jvm_external//:defs.bzl", "artifact")
+load("@rules_jvm_external//:specs.bzl", "maven")
+
+MAVEN_REPO_NAME = "avro"
+AVRO_TOOLS = ("org.apache.avro", "avro-tools")
+AVRO = ("org.apache.avro", "avro")
+
+def _format_maven_jar_name(group_id, artifact_id):
+    """
+    group_id: str
+    artifact_id: str
+    """
+    return ("%s_%s" % (group_id, artifact_id)).replace(".", "_").replace("-", "_")
+
+def _format_maven_jar_dep_name(group_id, artifact_id, repo_name = "maven"):
+    """
+    group_id: str
+    artifact_id: str
+    repo_name: str = "maven"
+    """
+    return "@%s//:%s" % (repo_name, _format_maven_jar_name(group_id, artifact_id))
+
 def _join_list(l, delimiter):
     """
     Join a list into a single string. Inverse of List#split()
@@ -29,29 +52,26 @@ def _common_dir(dirs):
 
     return _join_list(shortest, "/")
 
-def avro_repositories():
-  # for code generation
-  native.maven_jar(
-      name = "org_apache_avro_avro_tools",
-      artifact = "org.apache.avro:avro-tools:1.8.1",
-      sha1 = "361c32d4cad8dea8e5944d588e7d410f9f2a7114",
-  )
-  native.bind(
-      name = 'io_bazel_rules_avro/dependency/avro_tools',
-      actual = '@org_apache_avro_avro_tools//jar',
-  )
-
-  # for code compilation
-  native.maven_jar(
-      name = "org_apache_avro_avro",
-      artifact = "org.apache.avro:avro:1.8.1",
-      sha1 = "f4e11d00055760dca33daab193192bd75cc87b59",
-  )
-  native.bind(
-      name = 'io_bazel_rules_avro/dependency/avro',
-      actual = '@org_apache_avro_avro//jar',
-  )
-
+def avro_repositories(version = "1.8.1"):
+    """
+    version: str = "1.8.1" - the version of avro to fetch
+    """
+    artifacts = [
+        maven.artifact(
+            group = group_id,
+            artifact = artifact_id,
+            version = version,
+        )
+        for [group_id, artifact_id] in [AVRO, AVRO_TOOLS]
+    ]
+    maven_install(
+        name = MAVEN_REPO_NAME,
+        fetch_sources = True,
+        artifacts = artifacts,
+        repositories = [
+            "http://central.maven.org/maven2/",
+        ],
+    )
 
 def _new_generator_command(ctx, src_dir, gen_dir):
   java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
@@ -77,9 +97,11 @@ def _new_generator_command(ctx, src_dir, gen_dir):
 
 def _impl(ctx):
     src_dir = _common_dir([f.dirname for f in ctx.files.srcs])
+    
     gen_dir = "{out}-tmp".format(
          out=ctx.outputs.codegen.path
     )
+    
     commands = [
         "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
         _new_generator_command(ctx, src_dir, gen_dir),
@@ -98,7 +120,7 @@ def _impl(ctx):
       ctx.file._avro_tools,
     ]
 
-    ctx.action(
+    ctx.actions.run_shell(
         inputs = inputs,
         outputs = [ctx.outputs.codegen],
         command = " && ".join(commands),
@@ -123,7 +145,13 @@ avro_gen = rule(
                 ),
         "_avro_tools": attr.label(
             cfg = "host",
-            default = Label("//external:io_bazel_rules_avro/dependency/avro_tools"),
+            default = Label(
+                _format_maven_jar_dep_name(
+                    group_id = AVRO_TOOLS[0],
+                    artifact_id = AVRO_TOOLS[1],
+                    repo_name = MAVEN_REPO_NAME,
+                ),
+            ),
             allow_single_file = True,
         )
     },
@@ -147,7 +175,13 @@ def avro_java_library(
         name=name,
         srcs=[name + '_srcjar'],
         deps = [
-          Label("//external:io_bazel_rules_avro/dependency/avro")
+          Label(
+              _format_maven_jar_dep_name(
+                  group_id = AVRO[0],
+                  artifact_id = AVRO[1],
+                  repo_name = MAVEN_REPO_NAME,
+              ),
+          ),
         ],
         visibility=visibility,
     )
