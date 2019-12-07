@@ -1,4 +1,6 @@
-# bazel avro rules [![Build Status](https://travis-ci.org/meetup/rules_avro.svg?branch=master)](https://travis-ci.org/meetup/rules_avro)
+# bazel avro rules
+
+[![Build Status](https://travis-ci.org/chenrui333/rules_avro.svg?branch=master)](https://travis-ci.org/chenrui333/rules_avro)
 
 > [Bazel](https://bazel.build/) rules for generating java sources and libraries from [avro](https://avro.apache.org/) schemas
 
