@@ -69,7 +69,7 @@ def avro_repositories(version = "1.9.1"):
         fetch_sources = True,
         artifacts = artifacts,
         repositories = [
-            "http://central.maven.org/maven2/",
+            "https://repo1.maven.org/maven2/",
         ],
     )
 
