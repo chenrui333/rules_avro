@@ -42,5 +42,5 @@ test_build_is_identical() {
   diff hash1 hash2
 }
 
-run_test bazel build test/...
+run_test bazel build --verbose_failures test/...
 run_test test_build_is_identical

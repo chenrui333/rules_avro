@@ -14,3 +14,12 @@ avro_java_library(
         ["src/**/*.avsc"],
     ),
 )
+
+avro_java_library(
+    name = "files",
+    strings = True,
+    files_not_dirs = True,
+    srcs = glob(
+        ["src/**/*.avsc"],
+    )
+)

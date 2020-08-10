@@ -33,6 +33,12 @@ def _join_list(l, delimiter):
         joined += (item + delimiter)
     return joined
 
+def _files(files):
+    if not files:
+        return ""
+    return " ".join([f.path for f in files])
+
+
 def _common_dir(dirs):
     if not dirs:
         return ""
@@ -96,7 +102,7 @@ def _new_generator_command(ctx, src_dir, gen_dir):
   return gen_command
 
 def _impl(ctx):
-    src_dir = _common_dir([f.dirname for f in ctx.files.srcs])
+    src_dir = _files(ctx.files.srcs) if ctx.attr.files_not_dirs else _common_dir([f.dirname for f in ctx.files.srcs])
 
     gen_dir = "{out}-tmp".format(
          out=ctx.outputs.codegen.path
@@ -139,6 +145,9 @@ avro_gen = rule(
         ),
         "strings": attr.bool(),
         "encoding": attr.string(),
+        "files_not_dirs": attr.bool(
+            default = False
+        ),
         "_jdk": attr.label(
                     default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
                     providers = [java_common.JavaRuntimeInfo]
@@ -162,13 +171,13 @@ avro_gen = rule(
 )
 
 
-def avro_java_library(
-  name, srcs=[], strings=None, encoding=None, visibility=None):
+def avro_java_library(name, srcs=[], strings=None, encoding=None, visibility=None, files_not_dirs=False):
     avro_gen(
         name=name + '_srcjar',
         srcs = srcs,
         strings=strings,
         encoding=encoding,
+        files_not_dirs=files_not_dirs,
         visibility=visibility,
     )
     native.java_library(
