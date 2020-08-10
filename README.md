@@ -98,6 +98,14 @@ Generates `.srcjar` containing generated `.java` source files from a collection 
         <p>set the encoding of output files.</p>
       </td>
     </tr>
+    <tr>
+      <td><code>avro_tools</code></td>
+      <td>
+        <code>Label, optional</code>
+        <p>Label to the runnable Avro tools jar. Default, uses the tools jar associated with the downloaded avro 
+        version via `avro_repository`</p>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -107,6 +115,9 @@ Generates `.srcjar` containing generated `.java` source files from a collection 
 avro_java_library(name, srcs, strings, encoding)
 ```
 
-Same as above except that the outputs include those provided by `java_library` rules.
+Same as above except
+  * instead of `avro_tools`, provide `avro_libs` as a dict(core, tools) of Labels for the avro libraries.
+    * See tests for an example the re-uses the downloaded library explicitly
+  * the outputs include those provided by `java_library` rules.
 
 Meetup 2017
