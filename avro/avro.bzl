@@ -6,6 +6,7 @@ MAVEN_REPO_NAME = "avro"
 AVRO_TOOLS = ("org.apache.avro", "avro-tools")
 AVRO = ("org.apache.avro", "avro")
 
+
 def _format_maven_jar_name(group_id, artifact_id):
     """
     group_id: str
@@ -20,6 +21,22 @@ def _format_maven_jar_dep_name(group_id, artifact_id, repo_name = "maven"):
     repo_name: str = "maven"
     """
     return "@%s//:%s" % (repo_name, _format_maven_jar_name(group_id, artifact_id))
+
+
+AVRO_TOOLS_LABEL = Label(_format_maven_jar_dep_name(
+                           group_id = AVRO_TOOLS[0],
+                           artifact_id = AVRO_TOOLS[1],
+                           repo_name = MAVEN_REPO_NAME))
+
+AVRO_CORE_LABEL = Label(_format_maven_jar_dep_name(
+                     group_id = AVRO[0],
+                     artifact_id = AVRO[1],
+                     repo_name = MAVEN_REPO_NAME))
+
+AVRO_LIBS_LABELS = {
+    'tools': AVRO_TOOLS_LABEL,
+    'core': AVRO_CORE_LABEL
+}
 
 def _join_list(l, delimiter):
     """
@@ -83,7 +100,7 @@ def _new_generator_command(ctx, src_dir, gen_dir):
   java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
   gen_command  = "{java} -jar {tool} compile ".format(
      java=java_path,
-     tool=ctx.file._avro_tools.path,
+     tool=ctx.file.avro_tools.path,
   )
 
   if ctx.attr.strings:
@@ -123,7 +140,7 @@ def _impl(ctx):
     ]
 
     inputs = ctx.files.srcs + ctx.files._jdk + [
-      ctx.file._avro_tools,
+      ctx.file.avro_tools,
     ]
 
     ctx.actions.run_shell(
@@ -152,15 +169,9 @@ avro_gen = rule(
                     default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
                     providers = [java_common.JavaRuntimeInfo]
                 ),
-        "_avro_tools": attr.label(
+        "avro_tools": attr.label(
             cfg = "host",
-            default = Label(
-                _format_maven_jar_dep_name(
-                    group_id = AVRO_TOOLS[0],
-                    artifact_id = AVRO_TOOLS[1],
-                    repo_name = MAVEN_REPO_NAME,
-                ),
-            ),
+            default = AVRO_LIBS_LABELS["tools"],
             allow_single_file = True,
         )
     },
@@ -171,7 +182,12 @@ avro_gen = rule(
 )
 
 
-def avro_java_library(name, srcs=[], strings=None, encoding=None, visibility=None, files_not_dirs=False):
+def avro_java_library(
+  name, srcs=[], strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None):
+    libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
+    tools = libs["tools"]
+    deps = [libs["core"]]
+
     avro_gen(
         name=name + '_srcjar',
         srcs = srcs,
@@ -179,18 +195,11 @@ def avro_java_library(name, srcs=[], strings=None, encoding=None, visibility=Non
         encoding=encoding,
         files_not_dirs=files_not_dirs,
         visibility=visibility,
+        avro_tools=tools
     )
     native.java_library(
         name=name,
         srcs=[name + '_srcjar'],
-        deps = [
-          Label(
-              _format_maven_jar_dep_name(
-                  group_id = AVRO[0],
-                  artifact_id = AVRO[1],
-                  repo_name = MAVEN_REPO_NAME,
-              ),
-          ),
-        ],
+        deps = deps,
         visibility=visibility,
     )
