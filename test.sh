@@ -11,6 +11,8 @@ fi
 echo "$_md5_util"
 }
 
+BAZEL_BIN=$(bazel info bazel-bin)
+
 NC='\033[0m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -34,10 +36,10 @@ function run_test() {
 
 test_build_is_identical() {
   bazel build test/...
-  $(md5_util) bazel-bin/test/*.{srcjar,jar} > hash1
+  $(md5_util) ${BAZEL_BIN}/test/*.{srcjar,jar} > hash1
   bazel clean
   bazel build test/...
-  $(md5_util) bazel-bin/test/*.{srcjar,jar} > hash2
+  $(md5_util) ${BAZEL_BIN}/test/*.{srcjar,jar} > hash2
   cat hash1 hash2
   diff hash1 hash2
 }
