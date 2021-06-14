@@ -1,4 +1,4 @@
-# bazel avro rules
+# bazel avro rules <!-- omit in toc -->
 
 [![Build Status](https://travis-ci.org/chenrui333/rules_avro.svg?branch=master)](https://travis-ci.org/chenrui333/rules_avro)
 
@@ -6,8 +6,10 @@
 
 ## Rules
 
-* [avro_gen](#avro_gen)
-* [avro_java_library](#avro_java_library)
+- [Rules](#rules)
+- [Getting started](#getting-started)
+- [avro_gen](#avro_gen)
+- [avro_java_library](#avro_java_library)
 
 ## Getting started
 
@@ -29,12 +31,14 @@ http_archive(
 )
 
 
-rules_avro_version="c9bfdda9e909e4213abc595a07353e0d23128bbd" # update this commit hash as needed
+RULES_AVRO_VERSION = "96670d5c4a0a3e0f25f4177336e1fa94eba8be5a"
+RULES_AVRO_SHA256 = "3bd69872ec72904e843762f7b3532fd1125215503a635a24f6c8037c75b299bc"
 
-git_repository(
+http_archive(
     name = "io_bazel_rules_avro",
-    commit = rules_avro_version,
-    remote = "git@github.com:meetup/rules_avro.git",
+    strip_prefix = "rules_avro-%s" % RULES_AVRO_VERSION,
+    url = "https://github.com/chenrui333/rules_avro/archive/%s.tar.gz" % RULES_AVRO_VERSION,
+    sha256 = RULES_AVRO_SHA256
 )
 
 load("@io_bazel_rules_avro//avro:avro.bzl", "avro_repositories")
@@ -102,7 +106,7 @@ Generates `.srcjar` containing generated `.java` source files from a collection 
       <td><code>avro_tools</code></td>
       <td>
         <code>Label, optional</code>
-        <p>Label to the runnable Avro tools jar. Default, uses the tools jar associated with the downloaded avro 
+        <p>Label to the runnable Avro tools jar. Default, uses the tools jar associated with the downloaded avro
         version via `avro_repository`</p>
       </td>
     </tr>
@@ -119,5 +123,3 @@ Same as above except
   * instead of `avro_tools`, provide `avro_libs` as a dict(core, tools) of Labels for the avro libraries.
     * See tests for an example the re-uses the downloaded library explicitly
   * the outputs include those provided by `java_library` rules.
-
-Meetup 2017
