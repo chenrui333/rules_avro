@@ -1,0 +1,20 @@
+name: Main
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - run: bazel --version
+    - name: Test
+      run: make test
