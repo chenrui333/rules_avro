@@ -6,7 +6,6 @@ MAVEN_REPO_NAME = "avro"
 AVRO_TOOLS = ("org.apache.avro", "avro-tools")
 AVRO = ("org.apache.avro", "avro")
 
-
 def _format_maven_jar_name(group_id, artifact_id):
     """
     group_id: str
@@ -22,20 +21,21 @@ def _format_maven_jar_dep_name(group_id, artifact_id, repo_name = "maven"):
     """
     return "@%s//:%s" % (repo_name, _format_maven_jar_name(group_id, artifact_id))
 
-
 AVRO_TOOLS_LABEL = Label(_format_maven_jar_dep_name(
-                           group_id = AVRO_TOOLS[0],
-                           artifact_id = AVRO_TOOLS[1],
-                           repo_name = MAVEN_REPO_NAME))
+    group_id = AVRO_TOOLS[0],
+    artifact_id = AVRO_TOOLS[1],
+    repo_name = MAVEN_REPO_NAME,
+))
 
 AVRO_CORE_LABEL = Label(_format_maven_jar_dep_name(
-                     group_id = AVRO[0],
-                     artifact_id = AVRO[1],
-                     repo_name = MAVEN_REPO_NAME))
+    group_id = AVRO[0],
+    artifact_id = AVRO[1],
+    repo_name = MAVEN_REPO_NAME,
+))
 
 AVRO_LIBS_LABELS = {
-    'tools': AVRO_TOOLS_LABEL,
-    'core': AVRO_CORE_LABEL
+    "tools": AVRO_TOOLS_LABEL,
+    "core": AVRO_CORE_LABEL,
 }
 
 def _join_list(l, delimiter):
@@ -54,7 +54,6 @@ def _files(files):
     if not files:
         return ""
     return " ".join([f.path for f in files])
-
 
 def _common_dir(dirs):
     if not dirs:
@@ -97,50 +96,50 @@ def avro_repositories(version = "1.9.1"):
     )
 
 def _new_generator_command(ctx, src_dir, gen_dir):
-  java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
-  gen_command  = "{java} -jar {tool} compile ".format(
-     java=java_path,
-     tool=ctx.file.avro_tools.path,
-  )
-
-  if ctx.attr.strings:
-    gen_command += " -string"
-
-  if ctx.attr.encoding:
-    gen_command += " -encoding {encoding}".format(
-      encoding=ctx.attr.encoding
+    java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+    gen_command = "{java} -jar {tool} compile ".format(
+        java = java_path,
+        tool = ctx.file.avro_tools.path,
     )
 
-  gen_command += " schema {src} {gen_dir}".format(
-    src=src_dir,
-    gen_dir=gen_dir
-  )
+    if ctx.attr.strings:
+        gen_command += " -string"
 
-  return gen_command
+    if ctx.attr.encoding:
+        gen_command += " -encoding {encoding}".format(
+            encoding = ctx.attr.encoding,
+        )
+
+    gen_command += " schema {src} {gen_dir}".format(
+        src = src_dir,
+        gen_dir = gen_dir,
+    )
+
+    return gen_command
 
 def _impl(ctx):
     src_dir = _files(ctx.files.srcs) if ctx.attr.files_not_dirs else _common_dir([f.dirname for f in ctx.files.srcs])
 
     gen_dir = "{out}-tmp".format(
-         out=ctx.outputs.codegen.path
+        out = ctx.outputs.codegen.path,
     )
 
     commands = [
-        "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
+        "mkdir -p {gen_dir}".format(gen_dir = gen_dir),
         _new_generator_command(ctx, src_dir, gen_dir),
         # forcing a timestamp for deterministic artifacts
         "find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
-          gen_dir=gen_dir
+            gen_dir = gen_dir,
         ),
         "{jar} cMf {output} -C {gen_dir} .".format(
-          jar="%s/bin/jar" % ctx.attr._jdk[java_common.JavaRuntimeInfo].java_home,
-          output=ctx.outputs.codegen.path,
-          gen_dir=gen_dir
-        )
+            jar = "%s/bin/jar" % ctx.attr._jdk[java_common.JavaRuntimeInfo].java_home,
+            output = ctx.outputs.codegen.path,
+            gen_dir = gen_dir,
+        ),
     ]
 
     inputs = ctx.files.srcs + ctx.files._jdk + [
-      ctx.file.avro_tools,
+        ctx.file.avro_tools,
     ]
 
     ctx.actions.run_shell(
@@ -149,31 +148,31 @@ def _impl(ctx):
         command = " && ".join(commands),
         progress_message = "generating avro srcs",
         arguments = [],
-      )
+    )
 
     return struct(
-      codegen=ctx.outputs.codegen
+        codegen = ctx.outputs.codegen,
     )
 
 avro_gen = rule(
     attrs = {
         "srcs": attr.label_list(
-          allow_files = [".avsc"]
+            allow_files = [".avsc"],
         ),
         "strings": attr.bool(),
         "encoding": attr.string(),
         "files_not_dirs": attr.bool(
-            default = False
+            default = False,
         ),
         "_jdk": attr.label(
-                    default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
-                    providers = [java_common.JavaRuntimeInfo]
-                ),
+            default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
+            providers = [java_common.JavaRuntimeInfo],
+        ),
         "avro_tools": attr.label(
             cfg = "host",
             default = AVRO_LIBS_LABELS["tools"],
             allow_single_file = True,
-        )
+        ),
     },
     outputs = {
         "codegen": "%{name}_codegen.srcjar",
@@ -181,25 +180,30 @@ avro_gen = rule(
     implementation = _impl,
 )
 
-
 def avro_java_library(
-  name, srcs=[], strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None):
+        name,
+        srcs = [],
+        strings = None,
+        encoding = None,
+        visibility = None,
+        files_not_dirs = False,
+        avro_libs = None):
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
     tools = libs["tools"]
     deps = [libs["core"]]
 
     avro_gen(
-        name=name + '_srcjar',
+        name = name + "_srcjar",
         srcs = srcs,
-        strings=strings,
-        encoding=encoding,
-        files_not_dirs=files_not_dirs,
-        visibility=visibility,
-        avro_tools=tools
+        strings = strings,
+        encoding = encoding,
+        files_not_dirs = files_not_dirs,
+        visibility = visibility,
+        avro_tools = tools,
     )
     native.java_library(
-        name=name,
-        srcs=[name + '_srcjar'],
+        name = name,
+        srcs = [name + "_srcjar"],
         deps = deps,
-        visibility=visibility,
+        visibility = visibility,
     )
