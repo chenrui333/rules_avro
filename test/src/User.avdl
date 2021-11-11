@@ -1,0 +1,3 @@
+protocol UserProto {
+    import schema "User.avsc";
+}

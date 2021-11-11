@@ -96,7 +96,140 @@ def avro_repositories(version = "1.9.1"):
         ],
     )
 
-def _new_generator_command(ctx, src_dir, gen_dir):
+def _new_idl2schemata_command(ctx, src_file, gen_dir):
+    java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+
+    return [
+        "{java} -jar {tool} idl2schemata {src} {dest}".format(
+            java = java_path,
+            tool = ctx.file.avro_tools.path,
+            src = src_file.path,
+            dest = gen_dir.path,
+        ),
+    ]
+
+def _idl_schema_impl(ctx):
+    files = []
+    gen_dir = ctx.actions.declare_directory(
+        "{out}".format(
+            out = ctx.label.name,
+        ),
+    )
+
+    commands = ["mkdir -p {gen_dir}".format(gen_dir = gen_dir.path)]
+    for file in ctx.files.srcs:
+        commands.extend(_new_idl2schemata_command(ctx, file, gen_dir))
+
+    # forcing a timestamp for deterministic artifacts
+    commands.append("find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
+        gen_dir = gen_dir.path,
+    ))
+
+    inputs = ctx.files.srcs + ctx.files.imports + ctx.files._jdk + [
+        ctx.file.avro_tools,
+    ]
+
+    ctx.actions.run_shell(
+        inputs = inputs,
+        outputs = [gen_dir],
+        command = " && ".join(commands),
+        progress_message = "generating avro schemata",
+        arguments = [],
+    )
+
+    return [
+        DefaultInfo(files = depset([gen_dir])),
+    ]
+
+avro_idl_schema = rule(
+    attrs = {
+        "srcs": attr.label_list(
+            allow_files = [".avdl"],
+        ),
+        "imports": attr.label_list(
+            allow_files = [".avdl", ".avpr", ".avsc"],
+        ),
+        "_jdk": attr.label(
+            default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
+            providers = [java_common.JavaRuntimeInfo],
+        ),
+        "avro_tools": attr.label(
+            cfg = "host",
+            default = AVRO_LIBS_LABELS["tools"],
+            allow_single_file = True,
+        ),
+    },
+    implementation = _idl_schema_impl,
+)
+
+def _new_idl_command(ctx, src_file, gen_dir, outputs):
+    java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+    dest = ctx.actions.declare_file(
+        gen_dir + "/" + src_file.path[:src_file.path.rfind(".")] + ".avpr",
+    )
+    outputs.append(dest)
+
+    return [
+        "mkdir -p {dest}".format(dest = dest.dirname),
+        "{java} -jar {tool} idl {src} {dest}".format(
+            java = java_path,
+            tool = ctx.file.avro_tools.path,
+            src = src_file.path,
+            dest = dest.path,
+        ),
+        # forcing a timestamp for deterministic artifacts
+        "touch -t 198001010000 {dest}".format(dest = dest.path),
+    ]
+
+def _idl_gen_impl(ctx):
+    all_outputs = []
+    gen_dir = "{out}-proto".format(
+        out = ctx.label.name,
+    )
+
+    base_inputs = ctx.files.imports + ctx.files._jdk + [
+        ctx.file.avro_tools,
+    ]
+
+    for file in ctx.files.srcs:
+        outputs = []
+        commands = _new_idl_command(ctx, file, gen_dir, outputs)
+        ctx.actions.run_shell(
+            inputs = [file] + base_inputs,
+            outputs = outputs,
+            command = " && ".join(commands),
+            progress_message = "generating avro proto for {}".format(file.basename),
+            arguments = [],
+        )
+
+        all_outputs.extend(outputs)
+
+    return [
+        DefaultInfo(files = depset(all_outputs)),
+    ]
+
+_avro_idl_gen = rule(
+    attrs = {
+        "srcs": attr.label_list(
+            allow_files = [".avdl"],
+        ),
+        "imports": attr.label_list(
+            allow_files = [".avdl", ".avpr", ".avsc"],
+        ),
+        "_jdk": attr.label(
+            default = Label("@bazel_tools//tools/jdk:current_java_runtime"),
+            providers = [java_common.JavaRuntimeInfo],
+        ),
+        "avro_tools": attr.label(
+            cfg = "host",
+            default = AVRO_LIBS_LABELS["tools"],
+            allow_single_file = True,
+        ),
+    },
+    implementation = _idl_gen_impl,
+)
+
+def _new_generator_command(ctx, src_dir, type, gen_dir):
   java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
   gen_command  = "{java} -jar {tool} compile ".format(
      java=java_path,
@@ -111,14 +244,15 @@ def _new_generator_command(ctx, src_dir, gen_dir):
       encoding=ctx.attr.encoding
     )
 
-  gen_command += " schema {src} {gen_dir}".format(
+  gen_command += " {type} {src} {gen_dir}".format(
     src=src_dir,
-    gen_dir=gen_dir
+    type=type,
+    gen_dir=gen_dir,
   )
 
   return gen_command
 
-def _impl(ctx):
+def _gen_impl(ctx):
     src_dir = _files(ctx.files.srcs) if ctx.attr.files_not_dirs else _common_dir([f.dirname for f in ctx.files.srcs])
 
     gen_dir = "{out}-tmp".format(
@@ -127,7 +261,7 @@ def _impl(ctx):
 
     commands = [
         "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
-        _new_generator_command(ctx, src_dir, gen_dir),
+        _new_generator_command(ctx, src_dir, ctx.attr.type, gen_dir),
         # forcing a timestamp for deterministic artifacts
         "find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
           gen_dir=gen_dir
@@ -158,7 +292,11 @@ def _impl(ctx):
 avro_gen = rule(
     attrs = {
         "srcs": attr.label_list(
-          allow_files = [".avsc"]
+          allow_files = [".avsc", ".avpr"],
+        ),
+        "type": attr.string(
+            default = "schema",
+            values = ["schema", "protocol"],
         ),
         "strings": attr.bool(),
         "encoding": attr.string(),
@@ -178,12 +316,11 @@ avro_gen = rule(
     outputs = {
         "codegen": "%{name}_codegen.srcjar",
     },
-    implementation = _impl,
+    implementation = _gen_impl,
 )
 
-
 def avro_java_library(
-  name, srcs=[], strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None):
+  name, srcs=[], type=None, strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None):
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
     tools = libs["tools"]
     deps = [libs["core"]]
@@ -191,6 +328,7 @@ def avro_java_library(
     avro_gen(
         name=name + '_srcjar',
         srcs = srcs,
+        type = type,
         strings=strings,
         encoding=encoding,
         files_not_dirs=files_not_dirs,
@@ -202,4 +340,61 @@ def avro_java_library(
         srcs=[name + '_srcjar'],
         deps = deps,
         visibility=visibility,
+    )
+
+def avro_idl_gen(
+        name,
+        srcs = [],
+        imports = [],
+        strings = None,
+        encoding = None,
+        visibility = None,
+        avro_tools = None):
+    _avro_idl_gen(
+        name = name + "_idl",
+        srcs = srcs,
+        imports = imports,
+        avro_tools = avro_tools,
+    )
+
+    avro_gen(
+        name = name,
+        srcs = [name + "_idl"],
+        type = "protocol",
+        strings = strings,
+        encoding = encoding,
+        visibility = visibility,
+        files_not_dirs = True,
+        avro_tools = avro_tools,
+    )
+
+def avro_idl_java_library(
+        name,
+        srcs = [],
+        imports = [],
+        strings = None,
+        encoding = None,
+        visibility = None,
+        avro_libs = None):
+    """Generate a Java library from an AVRO IDL definition"""
+
+    libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
+    tools = libs["tools"]
+    deps = [libs["core"]]
+
+    avro_idl_gen(
+        name = name + "_srcjar",
+        srcs = srcs,
+        imports = imports,
+        strings = strings,
+        encoding = encoding,
+        visibility = visibility,
+        avro_tools = tools,
+    )
+
+    native.java_library(
+        name = name,
+        srcs = [name + "_srcjar"],
+        deps = deps,
+        visibility = visibility
     )
