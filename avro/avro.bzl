@@ -121,7 +121,7 @@ def _idl_schema_impl(ctx):
         commands.extend(_new_idl2schemata_command(ctx, file, gen_dir))
 
     # forcing a timestamp for deterministic artifacts
-    commands.append("find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
+    commands.append("find {gen_dir} -exec touch -t 198001010000 {{}} \\\\;".format(
         gen_dir = gen_dir.path,
     ))
 
