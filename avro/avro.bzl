@@ -272,7 +272,7 @@ def _gen_impl(ctx):
         "pushd {gen_dir}".format(gen_dir = gen_dir),
         # Sort the entries when zipping in order to guarantee deterministic outputs.
         # Note that we use zip instead of jar because jar does not seem to respect insert ordering.
-        "find * | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
+        "find . -printf '%P\n' | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
             zipper = ctx.executable._zipper.path,
             output = ctx.outputs.codegen.path,
         ),
