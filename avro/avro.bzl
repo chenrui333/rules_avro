@@ -75,9 +75,10 @@ def _common_dir(dirs):
 
     return _join_list(shortest, "/")
 
-def avro_repositories(version = "1.9.1"):
+def avro_repositories(version = "1.9.1", excluded_artifacts = []):
     """
     version: str = "1.9.1" - the version of avro to fetch
+    excluded_artifacts = [] - artifacts to have maven_install exclude
     """
     artifacts = [
         maven.artifact(
@@ -91,6 +92,7 @@ def avro_repositories(version = "1.9.1"):
         name = MAVEN_REPO_NAME,
         fetch_sources = True,
         artifacts = artifacts,
+        excluded_artifacts = excluded_artifacts,
         repositories = [
             "https://repo1.maven.org/maven2/",
         ],
