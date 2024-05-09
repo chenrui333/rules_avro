@@ -270,11 +270,14 @@ def _gen_impl(ctx):
         "find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
           gen_dir=gen_dir
         ),
-        "{jar} cMf {output} -C {gen_dir} .".format(
-          jar="%s/bin/jar" % ctx.attr._jdk[java_common.JavaRuntimeInfo].java_home,
-          output=ctx.outputs.codegen.path,
-          gen_dir=gen_dir
-        )
+        "base_dir=$(pwd)",
+        "pushd {gen_dir}".format(gen_dir = gen_dir),
+        # Sort the entries when zipping in order to guarantee deterministic outputs.
+        # Note that we use zip instead of jar because jar does not seem to respect insert ordering.
+        "find . -printf '%P\n' | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
+            zipper = ctx.executable._zipper.path,
+            output = ctx.outputs.codegen.path,
+        ),
         # Leave the source files we created in gen_dir, since they are useful for IDE code navigation.
     ]
 
@@ -284,11 +287,12 @@ def _gen_impl(ctx):
 
     ctx.actions.run_shell(
         inputs = inputs,
+        tools = [ctx.executable._zipper],
         outputs = [ctx.outputs.codegen],
         command = " && ".join(commands),
         progress_message = "generating avro srcs",
         arguments = [],
-      )
+    )
 
     return struct(
       codegen=ctx.outputs.codegen
@@ -312,6 +316,11 @@ avro_gen = rule(
                     default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
                     providers = [java_common.JavaRuntimeInfo]
                 ),
+        "_zipper": attr.label(
+            default = Label("@bazel_tools//tools/zip:zipper"),
+            executable = True,
+            cfg = "exec",
+        ),
         "avro_tools": attr.label(
             cfg = "host",
             default = AVRO_LIBS_LABELS["tools"],
