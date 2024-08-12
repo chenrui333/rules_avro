@@ -4,6 +4,9 @@ on:
   push:
     paths-ignore:
       - '*.md'
+  pull_request:
+    paths-ignore:
+      - '*.md'
   workflow_dispatch:
 
 jobs:
@@ -11,10 +14,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-11]
+        os: [ubuntu-22.04, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: bazel --version
     - name: Test
       run: make test
