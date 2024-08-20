@@ -334,7 +334,7 @@ avro_gen = rule(
 )
 
 def avro_java_library(
-  name, srcs=[], type=None, strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None):
+  name, srcs=[], type=None, strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None, **kargs):
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
     tools = libs["tools"]
     deps = [libs["core"]]
@@ -349,12 +349,14 @@ def avro_java_library(
         visibility=visibility,
         avro_tools=tools
     )
-    native.java_library(
-        name=name,
-        srcs=[name + '_srcjar'],
-        deps = deps,
-        visibility=visibility,
-    )
+    args = {
+        "name": name,
+        "srcs": [name + '_srcjar'],
+        "deps": deps,
+        "visibility": visibility,
+    }
+    args.update(kargs)
+    native.java_library(**args)
 
 def avro_idl_gen(
         name,
@@ -389,7 +391,8 @@ def avro_idl_java_library(
         strings = None,
         encoding = None,
         visibility = None,
-        avro_libs = None):
+        avro_libs = None,
+        **kargs):
     """Generate a Java library from an AVRO IDL definition"""
 
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
@@ -406,9 +409,11 @@ def avro_idl_java_library(
         avro_tools = tools,
     )
 
-    native.java_library(
-        name = name,
-        srcs = [name + "_srcjar"],
-        deps = deps,
-        visibility = visibility
-    )
+    args = {
+        "name": name,
+        "srcs": [name + "_srcjar"],
+        "deps": deps,
+        "visibility": visibility
+    }
+    args.update(kargs)
+    native.java_library(**args)
