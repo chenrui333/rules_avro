@@ -267,14 +267,14 @@ def _gen_impl(ctx):
         "mkdir -p {gen_dir}".format(gen_dir=gen_dir),
         _new_generator_command(ctx, src_dir, ctx.attr.type, gen_dir),
         # forcing a timestamp for deterministic artifacts
-        "find {gen_dir} -exec touch -t 198001010000 {{}} \\\\;".format(
+        "find {gen_dir} -exec touch -t 198001010000 {{}} \\;".format(
           gen_dir=gen_dir
         ),
         "base_dir=$(pwd)",
         "pushd {gen_dir}".format(gen_dir = gen_dir),
         # Sort the entries when zipping in order to guarantee deterministic outputs.
         # Note that we use zip instead of jar because jar does not seem to respect insert ordering.
-        "find . -printf '%P\n' | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
+        "find . -print | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
             zipper = ctx.executable._zipper.path,
             output = ctx.outputs.codegen.path,
         ),
