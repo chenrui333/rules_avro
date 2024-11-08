@@ -5,6 +5,7 @@ load("@rules_jvm_external//:specs.bzl", "maven")
 MAVEN_REPO_NAME = "avro"
 AVRO_TOOLS = ("org.apache.avro", "avro-tools")
 AVRO = ("org.apache.avro", "avro")
+AVRO_DEFAULT_VERSION = "1.9.1"
 
 
 def _format_maven_jar_name(group_id, artifact_id):
@@ -75,9 +76,9 @@ def _common_dir(dirs):
 
     return _join_list(shortest, "/")
 
-def avro_repositories(version = "1.9.1", excluded_artifacts = []):
+def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = []):
     """
-    version: str = "1.9.1" - the version of avro to fetch
+    version: str = AVRO_DEFAULT_VERSION - the version of avro to fetch
     excluded_artifacts = [] - artifacts to have maven_install exclude
     """
     artifacts = [
