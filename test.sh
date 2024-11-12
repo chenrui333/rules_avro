@@ -35,14 +35,18 @@ function run_test() {
 }
 
 test_build_is_identical() {
-  bazel build test/...
+  bazel clean
+  bazel build test/... "$@"
   $(md5_util) ${BAZEL_BIN}/test/*.{srcjar,jar} > hash1
   bazel clean
-  bazel build test/...
+  bazel build test/... "$@"
   $(md5_util) ${BAZEL_BIN}/test/*.{srcjar,jar} > hash2
+  bazel clean
   cat hash1 hash2
   diff hash1 hash2
 }
 
-run_test bazel build --verbose_failures test/...
-run_test test_build_is_identical
+run_test bazel build --verbose_failures test/... --noenable_bzlmod
+run_test bazel build --verbose_failures test/... --enable_bzlmod
+run_test test_build_is_identical --noenable_bzlmod
+run_test test_build_is_identical --enable_bzlmod
