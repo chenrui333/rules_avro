@@ -4,7 +4,7 @@ module(
 )
 
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_java", version = "7.12.2")
+bazel_dep(name = "rules_java", version = "7.12.4")
 bazel_dep(name = "rules_jvm_external", version = "6.5")
 bazel_dep(name = "rules_license", version = "1.0.0")
 
