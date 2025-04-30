@@ -7,6 +7,8 @@ AVRO_TOOLS = ("org.apache.avro", "avro-tools")
 AVRO = ("org.apache.avro", "avro")
 AVRO_DEFAULT_VERSION = "1.9.1"
 
+AvroInfo = provider()
+
 
 def _format_maven_jar_name(group_id, artifact_id):
     """
@@ -255,6 +257,7 @@ def _new_generator_command(ctx, src_dir, type, gen_dir):
 
   return gen_command
 
+
 def _gen_impl(ctx):
     src_dir = _files(ctx.files.srcs) if ctx.attr.files_not_dirs else _common_dir([f.dirname for f in ctx.files.srcs])
 
@@ -295,9 +298,7 @@ def _gen_impl(ctx):
         arguments = [],
     )
 
-    return struct(
-      codegen=ctx.outputs.codegen
-    )
+    return [AvroInfo(codegen = ctx.outputs.codegen)]
 
 avro_gen = rule(
     attrs = {
