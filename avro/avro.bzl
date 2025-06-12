@@ -1,3 +1,4 @@
+load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:defs.bzl", "artifact")
 load("@rules_jvm_external//:specs.bzl", "maven")
@@ -335,10 +336,11 @@ avro_gen = rule(
 )
 
 def avro_java_library(
-  name, srcs=[], type=None, strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None, **kargs):
+  name, srcs=[], type=None, strings=None, encoding=None, visibility=None, files_not_dirs=False, avro_libs=None, **kwargs):
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
     tools = libs["tools"]
     deps = [libs["core"]]
+    common_kwargs = propagate_common_rule_attributes(kwargs)
 
     avro_gen(
         name=name + '_srcjar',
@@ -348,7 +350,8 @@ def avro_java_library(
         encoding=encoding,
         files_not_dirs=files_not_dirs,
         visibility=visibility,
-        avro_tools=tools
+        avro_tools=tools,
+        **common_kwargs
     )
     args = {
         "name": name,
@@ -356,7 +359,7 @@ def avro_java_library(
         "deps": deps,
         "visibility": visibility,
     }
-    args.update(kargs)
+    args.update(kwargs)
     native.java_library(**args)
 
 def avro_idl_gen(
@@ -366,12 +369,15 @@ def avro_idl_gen(
         strings = None,
         encoding = None,
         visibility = None,
-        avro_tools = None):
+        avro_tools = None,
+        **kwargs):
+    common_kwargs = propagate_common_rule_attributes(kwargs)
     _avro_idl_gen(
         name = name + "_idl",
         srcs = srcs,
         imports = imports,
         avro_tools = avro_tools,
+        **common_kwargs
     )
 
     avro_gen(
@@ -383,6 +389,7 @@ def avro_idl_gen(
         visibility = visibility,
         files_not_dirs = True,
         avro_tools = avro_tools,
+        **common_kwargs
     )
 
 def avro_idl_java_library(
@@ -393,12 +400,13 @@ def avro_idl_java_library(
         encoding = None,
         visibility = None,
         avro_libs = None,
-        **kargs):
+        **kwargs):
     """Generate a Java library from an AVRO IDL definition"""
 
     libs = avro_libs if avro_libs else AVRO_LIBS_LABELS
     tools = libs["tools"]
     deps = [libs["core"]]
+    common_kwargs = propagate_common_rule_attributes(kwargs)
 
     avro_idl_gen(
         name = name + "_srcjar",
@@ -408,6 +416,7 @@ def avro_idl_java_library(
         encoding = encoding,
         visibility = visibility,
         avro_tools = tools,
+        **common_kwargs
     )
 
     args = {
@@ -416,5 +425,5 @@ def avro_idl_java_library(
         "deps": deps,
         "visibility": visibility
     }
-    args.update(kargs)
+    args.update(kwargs)
     native.java_library(**args)
