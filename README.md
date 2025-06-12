@@ -16,9 +16,44 @@
 To use the Avro rules, add the following to your projects `WORKSPACE` file
 
 ```python
-# rules_avro depends on rules_jvm_external: https://github.com/bazelbuild/rules_jvm_external
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
+# rules_avro depends on aspect_bazel_lib: https://github.com/bazel-contrib/bazel-lib
+http_archive(
+    name = "aspect_bazel_lib",
+    sha256 = "63ae96db9b9ea3821320e4274352980387dc3218baeea0387f7cf738755d0f16",
+    strip_prefix = "bazel-lib-2.19.1",
+    url = "https://github.com/bazel-contrib/bazel-lib/releases/download/v2.19.1/bazel-lib-v2.19.1.tar.gz",
+)
+
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+
+# Required bazel-lib dependencies
+
+aspect_bazel_lib_dependencies()
+
+# Required rules_shell dependencies
+load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
+
+rules_shell_dependencies()
+
+rules_shell_toolchains()
+
+# Register bazel-lib toolchains
+
+aspect_bazel_lib_register_toolchains()
+
+# Create the host platform repository transitively required by bazel-lib
+
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load("@platforms//host:extension.bzl", "host_platform_repo")
+
+maybe(
+    host_platform_repo,
+    name = "host_platform",
+)
+
+# rules_avro depends on rules_jvm_external: https://github.com/bazelbuild/rules_jvm_external
 RULES_JVM_EXTERNAL_TAG = "4.1"
 RULES_JVM_EXTERNAL_SHA = "f36441aa876c4f6427bfb2d1f2d723b48e9d930b62662bf723ddfb8fc80f0140"
 
