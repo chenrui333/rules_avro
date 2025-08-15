@@ -4,9 +4,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "aspect_bazel_lib",
-    sha256 = "63ae96db9b9ea3821320e4274352980387dc3218baeea0387f7cf738755d0f16",
-    strip_prefix = "bazel-lib-2.19.1",
-    url = "https://github.com/bazel-contrib/bazel-lib/releases/download/v2.19.1/bazel-lib-v2.19.1.tar.gz",
+    sha256 = "3522895fa13b97e8b27e3b642045682aa4233ae1a6b278aad6a3b483501dc9f2",
+    strip_prefix = "bazel-lib-2.20.0",
+    url = "https://github.com/bazel-contrib/bazel-lib/releases/download/v2.20.0/bazel-lib-v2.20.0.tar.gz",
 )
 
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
