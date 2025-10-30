@@ -22,7 +22,7 @@ avro = module_extension(
             attrs = {
                 "version": attr.string(default = AVRO_DEFAULT_VERSION),
                 "excluded_artifacts": attr.string_list(),
-                "maven_install_json": attr.string(default = ""),
+                "maven_install_json": attr.string(),
             },
         ),
     },
