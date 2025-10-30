@@ -57,4 +57,4 @@ rules_jvm_external_setup()
 
 load("//avro:avro.bzl", "avro_repositories")
 
-avro_repositories(maven_install_json = "../maven_install.json")
+avro_repositories()

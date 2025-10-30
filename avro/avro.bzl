@@ -79,11 +79,10 @@ def _common_dir(dirs):
 
     return _join_list(shortest, "/")
 
-def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = [], maven_install_json = None):
+def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = []):
     """
     version: str = AVRO_DEFAULT_VERSION - the version of avro to fetch
     excluded_artifacts = [] - artifacts to have maven_install exclude
-    maven_install_json = None - path to maven_install.json lockfile for pinned artifacts (absolute path)
     """
     artifacts = [
         maven.artifact(
@@ -93,21 +92,15 @@ def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = [], m
         )
         for [group_id, artifact_id] in [AVRO, AVRO_TOOLS]
     ]
-
-    kwargs = {
-        "name": MAVEN_REPO_NAME,
-        "fetch_sources": True,
-        "artifacts": artifacts,
-        "excluded_artifacts": excluded_artifacts,
-        "repositories": [
+    maven_install(
+        name = MAVEN_REPO_NAME,
+        fetch_sources = True,
+        artifacts = artifacts,
+        excluded_artifacts = excluded_artifacts,
+        repositories = [
             "https://repo1.maven.org/maven2/",
         ],
-    }
-
-    if maven_install_json:
-        kwargs["maven_install_json"] = maven_install_json
-
-    maven_install(**kwargs)
+    )
 
 def _new_idl2schemata_command(ctx, src_file, gen_dir):
     java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
