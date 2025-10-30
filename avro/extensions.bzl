@@ -8,6 +8,7 @@ def _avro_impl(module_ctx):
                 avro_repositories(
                     version = avro_artifacts.version,
                     excluded_artifacts = avro_artifacts.excluded_artifacts,
+                    maven_install_json = avro_artifacts.maven_install_json,
                 )
             else:
                 avro_repositories()
@@ -19,6 +20,7 @@ avro = module_extension(
             attrs = {
                 "version": attr.string(default = AVRO_DEFAULT_VERSION),
                 "excluded_artifacts": attr.string_list(),
+                "maven_install_json": attr.string(),
             },
         ),
     },
