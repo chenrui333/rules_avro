@@ -11,6 +11,6 @@ bazel_dep(name = "rules_license", version = "1.0.0")
 
 avro = use_extension("//avro:extensions.bzl", "avro")
 avro.avro_artifacts(
-    maven_install_json = "maven_install.json",
+    maven_install_json = "//:maven_install.json",
 )
 use_repo(avro, "avro")
