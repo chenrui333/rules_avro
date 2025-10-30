@@ -83,7 +83,7 @@ def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = [], m
     """
     version: str = AVRO_DEFAULT_VERSION - the version of avro to fetch
     excluded_artifacts = [] - artifacts to have maven_install exclude
-    maven_install_json = None - path to maven_install.json lockfile for pinned artifacts
+    maven_install_json = None - path to maven_install.json lockfile for pinned artifacts (relative to workspace root)
     """
     artifacts = [
         maven.artifact(
@@ -105,7 +105,7 @@ def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = [], m
     }
 
     if maven_install_json:
-        kwargs["maven_install_json"] = maven_install_json
+        kwargs["maven_install_json"] = Label(maven_install_json)
 
     maven_install(**kwargs)
 
