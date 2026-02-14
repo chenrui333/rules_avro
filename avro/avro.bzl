@@ -103,7 +103,8 @@ def avro_repositories(version = AVRO_DEFAULT_VERSION, excluded_artifacts = []):
     )
 
 def _new_idl2schemata_command(ctx, src_file, gen_dir):
-    java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+    java_path = java_runtime.java_executable_exec_path
 
     return [
         "{java} -jar {tool} idl2schemata {src} {dest}".format(
@@ -131,9 +132,12 @@ def _idl_schema_impl(ctx):
         gen_dir = gen_dir.path,
     ))
 
-    inputs = ctx.files.srcs + ctx.files.imports + ctx.files._jdk + [
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+    jdk_files = java_runtime.files.to_list()
+
+    inputs = ctx.files.srcs + ctx.files.imports + [
         ctx.file.avro_tools,
-    ]
+    ] + jdk_files
 
     ctx.actions.run_shell(
         inputs = inputs,
@@ -160,16 +164,17 @@ avro_idl_schema = rule(
             providers = [java_common.JavaRuntimeInfo],
         ),
         "avro_tools": attr.label(
-            cfg = "host",
             default = AVRO_LIBS_LABELS["tools"],
             allow_single_file = True,
         ),
     },
     implementation = _idl_schema_impl,
+    toolchains = ["@bazel_tools//tools/jdk:toolchain_type"],
 )
 
 def _new_idl_command(ctx, src_file, gen_dir, outputs):
-    java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+    java_path = java_runtime.java_executable_exec_path
     dest = ctx.actions.declare_file(
         gen_dir + "/" + src_file.path[:src_file.path.rfind(".")] + ".avpr",
     )
@@ -193,9 +198,12 @@ def _idl_gen_impl(ctx):
         out = ctx.label.name,
     )
 
-    base_inputs = ctx.files.imports + ctx.files._jdk + [
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+    jdk_files = java_runtime.files.to_list()
+
+    base_inputs = ctx.files.imports + [
         ctx.file.avro_tools,
-    ]
+    ] + jdk_files
 
     for file in ctx.files.srcs:
         outputs = []
@@ -227,16 +235,17 @@ _avro_idl_gen = rule(
             providers = [java_common.JavaRuntimeInfo],
         ),
         "avro_tools": attr.label(
-            cfg = "host",
             default = AVRO_LIBS_LABELS["tools"],
             allow_single_file = True,
         ),
     },
     implementation = _idl_gen_impl,
+    toolchains = ["@bazel_tools//tools/jdk:toolchain_type"],
 )
 
 def _new_generator_command(ctx, src_dir, type, gen_dir):
-  java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+  java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+  java_path = java_runtime.java_executable_exec_path
   gen_command  = "{java} -jar {tool} compile ".format(
      java=java_path,
      tool=ctx.file.avro_tools.path,
@@ -286,9 +295,12 @@ def _gen_impl(ctx):
         # Leave the source files we created in gen_dir, since they are useful for IDE code navigation.
     ]
 
-    inputs = ctx.files.srcs + ctx.files._jdk + [
+    java_runtime = ctx.toolchains["@bazel_tools//tools/jdk:toolchain_type"].java.java_runtime
+    jdk_files = java_runtime.files.to_list()
+
+    inputs = ctx.files.srcs + [
       ctx.file.avro_tools,
-    ]
+    ] +  jdk_files
 
     ctx.actions.run_shell(
         inputs = inputs,
@@ -325,7 +337,6 @@ avro_gen = rule(
             cfg = "exec",
         ),
         "avro_tools": attr.label(
-            cfg = "host",
             default = AVRO_LIBS_LABELS["tools"],
             allow_single_file = True,
         )
@@ -334,6 +345,7 @@ avro_gen = rule(
         "codegen": "%{name}_codegen.srcjar",
     },
     implementation = _gen_impl,
+    toolchains = ["@bazel_tools//tools/jdk:toolchain_type"],
 )
 
 def avro_java_library(
