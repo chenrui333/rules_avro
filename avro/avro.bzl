@@ -279,7 +279,9 @@ def _gen_impl(ctx):
         "pushd {gen_dir}".format(gen_dir = gen_dir),
         # Sort the entries when zipping in order to guarantee deterministic outputs.
         # Note that we use zip instead of jar because jar does not seem to respect insert ordering.
-        "find . -print | sort |  xargs \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\"".format(
+        # We also have to write to a temp file, otherwise we won't get all of the sources
+        # added. zipper only creates, it does not append.
+        "FILE_LIST=$(mktemp); find . -print | sort > \"$FILE_LIST\" && \"${{base_dir}}/{zipper}\" c \"${{base_dir}}/{output}\" \"@$FILE_LIST\"".format(
             zipper = ctx.executable._zipper.path,
             output = ctx.outputs.codegen.path,
         ),
