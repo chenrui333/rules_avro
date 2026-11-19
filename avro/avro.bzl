@@ -2,6 +2,8 @@ load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes")
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:defs.bzl", "artifact")
 load("@rules_jvm_external//:specs.bzl", "maven")
+load("@rules_java//java:defs.bzl", _java_library = "java_library")
+load("@rules_java//java/common:java_common.bzl", "java_common")
 
 MAVEN_REPO_NAME = "avro"
 AVRO_TOOLS = ("org.apache.avro", "avro-tools")
@@ -361,7 +363,7 @@ def avro_java_library(
         "visibility": visibility,
     }
     args.update(kwargs)
-    native.java_library(**args)
+    _java_library(**args)
 
 def avro_idl_gen(
         name,
@@ -427,4 +429,4 @@ def avro_idl_java_library(
         "visibility": visibility
     }
     args.update(kwargs)
-    native.java_library(**args)
+    _java_library(**args)
